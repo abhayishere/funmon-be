@@ -210,6 +210,7 @@ func calculateSummary(transactions []types.Transaction, period string) (Summary,
 }
 
 func transactionsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Received request for transactions with method: %s", r.Method)
 	frontendURL := os.Getenv("FRONTEND_URL")
 
 	w.Header().Set("Access-Control-Allow-Origin", frontendURL)
@@ -278,7 +279,7 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "Invalid filter")
 		return
 	}
-
+	log.Printf("Fetching transactions for filter: %s, days: %d", filter, days)
 	transactions, err := gmailService.FetchTransactions(days)
 	if err != nil {
 		if appErr, ok := err.(*services.AppError); ok {
@@ -288,10 +289,7 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	if filter == "daily" {
-
-	}
+	log.Printf("Fetched transactions for filter")
 	summary, err := calculateSummary(transactions, filter)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
@@ -301,6 +299,7 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 		Summary: summary,
 		Details: transactions,
 	}
+	log.Printf("Calculated summary for filter: %s", filter)
 	respJSON, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Error marshalling response: %v", err)
