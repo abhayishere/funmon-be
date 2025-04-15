@@ -17,7 +17,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
 )
@@ -433,10 +432,6 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env.local file: %v", err)
-	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080" // Default port
