@@ -20,7 +20,7 @@ func InitRedis() *redis.Client {
 	if err != nil {
 		log.Fatalf("Failed to parse Redis URL: %v", err)
 	}
-
+	log.Printf("Connecting to Redis at %s", opt.Addr)
 	client := redis.NewClient(opt)
 
 	// Check connectivity
