@@ -23,7 +23,6 @@ WORKDIR /app
 
 # Copy binary and env
 COPY --from=builder /app/main .
-COPY .env .env
 
 EXPOSE 8080
 
