@@ -235,6 +235,23 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 	if filter == "" {
 		filter = "all"
 	}
+	accessToken := r.URL.Query().Get("access_token")
+	if strings.TrimSpace(accessToken) == "" {
+		respondError(w, http.StatusUnauthorized, "Missing access token in query string")
+		return
+	}
+
+	oauthToken := &oauth2.Token{
+		AccessToken: accessToken,
+	}
+
+	tokenSource := oauthConfig.TokenSource(ctx, oauthToken)
+	client := oauth2.NewClient(ctx, tokenSource)
+	gmailService, err := services.NewGmailServiceWithClient(cfg, client)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, fmt.Sprintf("Gmail service error: %v", err))
+		return
+	}
 	userID, err := gmailService.GetUserId()
 	key := getCacheKey(userID, filter)
 	var response TransactionsResponse
@@ -250,24 +267,6 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	log.Printf("Cache miss for filter: %s; calling Gmail API", filter)
-
-	accessToken := r.URL.Query().Get("access_token")
-	if strings.TrimSpace(accessToken) == "" {
-		respondError(w, http.StatusUnauthorized, "Missing access token in query string")
-		return
-	}
-
-	oauthToken := &oauth2.Token{
-		AccessToken: accessToken,
-	}
-
-	tokenSource := oauthConfig.TokenSource(ctx, oauthToken)
-	client := oauth2.NewClient(ctx, tokenSource)
-	gmailService, err = services.NewGmailServiceWithClient(cfg, client)
-	if err != nil {
-		respondError(w, http.StatusInternalServerError, fmt.Sprintf("Gmail service error: %v", err))
-		return
-	}
 
 	var days int
 	switch filter {
