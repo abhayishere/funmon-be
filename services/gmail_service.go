@@ -49,7 +49,13 @@ func NewGmailServiceWithClient(cfg *config.Config, client *http.Client) (*GmailS
 		config:  cfg,
 	}, nil
 }
-
+func (gs *GmailService) GetUserId() (string, error) {
+	userInfo, err := gs.service.Users.GetProfile("me").Do()
+	if err != nil {
+		return "", fmt.Errorf("unable to get user profile: %v", err)
+	}
+	return userInfo.EmailAddress, nil
+}
 func (gs *GmailService) FetchTransactions(days int) ([]types.Transaction, error) {
 
 	endDate := time.Now()

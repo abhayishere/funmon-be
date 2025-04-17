@@ -48,9 +48,12 @@ var (
 	ctx          = context.Background()
 )
 
-func getCacheKey(filter string) string {
-	return fmt.Sprintf("transactions:%s", filter)
+func getCacheKey(userID, filter string) string {
+	return fmt.Sprintf("transactions:%s:%s", userID, filter)
 }
+
+// profile, err := srv.Users.GetProfile("me").Do()
+// userID := profile.EmailAddress
 
 func respondError(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
@@ -232,7 +235,8 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 	if filter == "" {
 		filter = "all"
 	}
-	key := getCacheKey(filter)
+	userID, err := gmailService.GetUserId()
+	key := getCacheKey(userID, filter)
 	var response TransactionsResponse
 
 	cached, err := redisClient.Get(ctx, key).Result()
@@ -407,19 +411,19 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 		Summary: monthlySummary,
 		Details: monthlyTxns,
 	}
-
+	userID, err := gmailService.GetUserId()
 	if data, err := json.Marshal(dailyResponse); err == nil {
-		redisClient.Set(ctx, getCacheKey("daily"), data, 20*time.Minute)
+		redisClient.Set(ctx, getCacheKey(userID, "daily"), data, 20*time.Minute)
 	} else {
 		log.Printf("Error marshalling daily response: %v", err)
 	}
 	if data, err := json.Marshal(weeklyResponse); err == nil {
-		redisClient.Set(ctx, getCacheKey("weekly"), data, 20*time.Minute)
+		redisClient.Set(ctx, getCacheKey(userID, "weekly"), data, 20*time.Minute)
 	} else {
 		log.Printf("Error marshalling weekly response: %v", err)
 	}
 	if data, err := json.Marshal(monthlyResponse); err == nil {
-		redisClient.Set(ctx, getCacheKey("monthly"), data, 20*time.Minute)
+		redisClient.Set(ctx, getCacheKey(userID, "monthly"), data, 20*time.Minute)
 	} else {
 		log.Printf("Error marshalling monthly response: %v", err)
 	}
