@@ -88,7 +88,7 @@ func calculateSummary(transactions []types.Transaction, period string) (Summary,
 			}
 		}
 		if maxDate.IsZero() {
-			return Summary{}, fmt.Errorf("no valid transaction dates found")
+			return Summary{}, nil
 		}
 
 		currentDay := maxDate.Format(layout)
@@ -124,7 +124,7 @@ func calculateSummary(transactions []types.Transaction, period string) (Summary,
 			}
 		}
 		if maxDate.IsZero() {
-			return Summary{}, fmt.Errorf("no valid transaction dates found")
+			return Summary{}, nil
 		}
 
 		currentWeekTotal := 0.0
@@ -170,7 +170,7 @@ func calculateSummary(transactions []types.Transaction, period string) (Summary,
 			months = append(months, m)
 		}
 		if len(months) == 0 {
-			return Summary{}, fmt.Errorf("no valid transaction months found")
+			return Summary{}, nil
 		}
 		sort.Strings(months)
 
@@ -253,10 +253,14 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID, err := gmailService.GetUserId()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, fmt.Sprintf("Gmail service error: %v", err))
+		return
+	}
 	key := getCacheKey(userID, filter)
 	var response TransactionsResponse
 
-	cached, err := redisClient.Get(ctx, key).Result()
+	cached, err := redisClient.Get(ctx, userID+key).Result()
 	if err == nil {
 		err = json.Unmarshal([]byte(cached), &response)
 		if err == nil {
@@ -307,7 +311,7 @@ func transactionsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error marshalling response: %v", err)
 	} else {
-		err = redisClient.Set(ctx, key, respJSON, 10*time.Minute).Err()
+		err = redisClient.Set(ctx, userID+key, respJSON, 120*time.Minute).Err()
 		if err != nil {
 			log.Printf("Error setting Redis cache: %v", err)
 		}

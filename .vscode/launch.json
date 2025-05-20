@@ -10,7 +10,13 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/main.go"
+            "program": "${workspaceFolder}/main.go",
+            "env": {
+                "REDIS_ADDRESS": "redis://localhost:6379",
+                "GMAIL_CLIENT_ID": "your-client-id",
+                "GMAIL_CLIENT_SECRET": "your-client-secret",
+                "FRONTEND_URL": "http://localhost:3000"
+            }
         }
     ]
 }
